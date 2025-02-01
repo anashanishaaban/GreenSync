@@ -51,6 +51,11 @@ async def calculate_emissions(request: EmissionRequest, background_tasks: Backgr
         "tree_equivalent": result["credits_needed"] / 10
     }
 
+@app.post("/distribute_task/")
+async def distribute_task(carbon_emission: float):
+    return {"message": f"Received {carbon_emission} units of carbon emission"}
+
+
 def store_result_in_db(user_id: str, result: dict):
     # Implement database storage
     pass

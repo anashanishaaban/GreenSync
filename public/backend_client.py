@@ -1,6 +1,6 @@
 import requests
 
-API_URL = "http://127.0.0.1:8000/distribute_task/"
+API_URL = "http://127.0.0.1:8000/calculate-emissions"
 
 def send_task(carbon_emission: float):
     """
