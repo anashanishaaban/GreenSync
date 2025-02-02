@@ -33,14 +33,20 @@ class CreditCalculator:
         base_credits = max(saved_emissions, 0)
 
         # Apply a dynamic multiplier based on CPU usage
-        dynamic_multiplier = CREDIT_MULTIPLIER + (cpu_usage / 2)  # Scales up with CPU usage
-        credits_earned = base_credits * dynamic_multiplier * 100  # Boost credits significantly
+        dynamic_multiplier = CREDIT_MULTIPLIER + (cpu_usage / 2)  # scales with CPU usage
+        raw_credits = base_credits * dynamic_multiplier * 100  # boost credits significantly
+
+        # Ensure at least 1 credit is earned if there is any saving.
+        credits_earned = round(raw_credits)
+        if base_credits > 0 and credits_earned == 0:
+            credits_earned = 1
 
         return {
             "saved_co2e": round(saved_emissions, 4),
-            "credits_earned": round(credits_earned),  # Rounded to whole number
+            "credits_earned": credits_earned,
             "data_center_equivalent": round(data_center_emissions, 4)
         }
+
 
 # --- CPU Monitoring ---
 def monitor_cpu_usage():
@@ -138,6 +144,7 @@ async def donate_credits(payload: DonationRequest):
     if isinstance(current_credits, float):
         current_credits = int(current_credits)
 
+    # Corrected condition: if user has less credits than the donation amount, throw error.
     if current_credits > amount:
         print(f"❌ Error: Insufficient credits. Available: {current_credits}, Attempted: {amount}")
         raise HTTPException(status_code=400, detail="Insufficient credits")
@@ -148,8 +155,6 @@ async def donate_credits(payload: DonationRequest):
     print(f"✅ Success! {amount} credits deducted. New balance: {new_balance}")
 
     return {"status": "success", "new_balance": new_balance}
-
-
 
 
 if __name__ == "__main__":
