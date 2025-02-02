@@ -1,16 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { auth } from "../firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+
 
 const API_URL = "http://127.0.0.1:8000/calculate-credits";
 const INITIAL_MESSAGE = "Hello! I'm your eco-friendly AI assistant. Let's chat while saving the planet! 🌍";
 
 const ChatPage = () => {
+  const navigate = useNavigate(); 
+  const [user, setUser] = useState(null);
   const [messages, setMessages] = useState([{ text: INITIAL_MESSAGE, sender: "bot" }]);
   const [input, setInput] = useState("");
   const [chatStart, setChatStart] = useState(null);
   const [usageMetrics, setUsageMetrics] = useState({ cpu: 0, gpu: 0 });
   const chatEndRef = useRef(null);
 
-  // Simulate hardware monitoring (replace with actual metrics collection)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate("/login"); // Redirect if not logged in
+      } else {
+        setUser(user);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setUsageMetrics({
@@ -26,41 +43,84 @@ const ChatPage = () => {
   }, [messages]);
 
   const handleSend = async () => {
-    if (input.trim() === "") return;
-  
+    if (!input.trim()) return;
+
+    // Start tracking chat duration
+    const startTime = chatStart || Date.now();
+    setChatStart(startTime);
+
+    // Add user message
     const userMessage = { text: input, sender: "user" };
-    setMessages((prev) => [...prev, userMessage]);
-  
+    setMessages(prev => [...prev, userMessage]);
+
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      // Calculate chat duration
+      const endTime = Date.now();
+      const duration = (endTime - startTime) / 1000; // in seconds
+
+      // Send metrics to backend
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({
+          duration: duration,
+          cpu_usage: usageMetrics.cpu,
+          gpu_usage: usageMetrics.gpu,
+          user_id: "frontend-user"
+        }),
       });
-  
+
       const data = await response.json();
-      console.log("API Response:", data); // ✅ Debugging output
-  
-      if (response.ok && data.response) {
-        const botMessage = data.response.content || "No content received"; // ✅ Extract content
-        setMessages((prev) => [...prev, { text: botMessage, sender: "bot" }]);
-      } else {
-        setMessages((prev) => [...prev, { text: "Error: No response from AI!", sender: "bot" }]);
-      }
+      
+      // Format response
+      const botResponse = 
+        `✅ Chat completed!\n` +
+        `🌿 Saved emissions: ${data.saved_emissions} kg CO2e\n` +
+        `💚 Green credits earned: ${data.green_credits}\n` +
+        `🏭 Data center equivalent: ${data.data_center_comparison} kg`;
+
+      setMessages(prev => [
+        ...prev,
+        { text: botResponse, sender: "bot" },
+      ]);
+      
+      // Reset chat timer
+      setChatStart(null);
     } catch (error) {
-      console.error("Error fetching AI response:", error);
-      setMessages((prev) => [...prev, { text: "Server error. Please try again later!", sender: "bot" }]);
+      setMessages(prev => [
+        ...prev,
+        { text: "⚠️ Error calculating credits. Please try again.", sender: "bot" },
+      ]);
     }
-  
-    setInput(""); // Clear input field
+
+    setInput("");
   };
-  
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigate("/"); // Redirect to landing page after logout
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+
+  if (!user) return null; //prevent UI from rendering until auth is checked
+
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       <div className="bg-white shadow-md p-4 text-center text-xl font-bold">
         🌱 EcoChat Assistant
       </div>
+
+      <button
+      onClick={handleSignOut}
+      className="text-white text-xl font-bold hover:text-gray-400 transition-colors"
+    >
+      Logout
+    </button>
 
       {/* System Metrics */}
       <div className="bg-green-50 p-2 text-sm text-center">
@@ -106,5 +166,6 @@ const ChatPage = () => {
     </div>
   );
 };
+
 
 export default ChatPage;
