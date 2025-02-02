@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
 
-const API_URL = "http://35.21.142.150:8000/chat"; // Replace with your local IP
+const API_URL = "http://35.21.142.150:8000/chat"; // Replace with your backend URL
 const INITIAL_MESSAGE = "Hello! I'm your eco-friendly AI assistant. Let's chat while saving the planet! 🌍";
+
 
 const ChatPage = () => {
   const navigate = useNavigate(); 
@@ -15,26 +14,6 @@ const ChatPage = () => {
   const [usageMetrics, setUsageMetrics] = useState({ cpu: 0, gpu: 0 });
   const chatEndRef = useRef(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        navigate("/login"); // Redirect if not logged in
-      } else {
-        setUser(user);
-      }
-    });
-    return () => unsubscribe();
-  }, [navigate]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setUsageMetrics({
-        cpu: Math.random() * 30 + 10,  // Simulated CPU usage 10-40%
-        gpu: Math.random() * 20 + 15   // Simulated GPU usage 15-35%
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,66 +21,38 @@ const ChatPage = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
-
-    const startTime = chatStart || Date.now();
-    setChatStart(startTime);
-
+  
     const userMessage = { text: input, sender: "user" };
     setMessages(prev => [...prev, userMessage]);
-
+  
     try {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: input,
-          duration: (Date.now() - startTime) / 1000, // Calculate chat duration
-          cpu_usage: usageMetrics.cpu,
-          gpu_usage: usageMetrics.gpu,
-          user_id: user?.uid || "guest-user",
-        }),
+        body: JSON.stringify({ message: input }), user_id: user?.uid || "guest-user"
       });
-
+  
       const data = await response.json();
       console.log("API Response:", data);
-
-      const botMessage = data.response?.content ||
-        `✅ Chat completed!\n🌿 Saved emissions: ${data.saved_emissions} kg CO2e\n💚 Green credits earned: ${data.green_credits}\n🏭 Data center equivalent: ${data.data_center_comparison} kg`;
-
-      setMessages(prev => [...prev, { text: botMessage, sender: "bot" }]);
-      setChatStart(null);
+  
+      if (response.ok && data.response) {
+        const botMessage = data.response.content || "No content received"; 
+        setMessages((prev) => [...prev, { text: botMessage, sender: "bot" }]);
+      } else {
+        setMessages(prev => [...prev, { text: "Error: No response from AI!", sender: "bot" }]);
+      }
     } catch (error) {
       console.error("Error fetching AI response:", error);
-      setMessages(prev => [...prev, { text: "⚠️ Error calculating credits. Please try again.", sender: "bot" }]);
+      setMessages(prev => [...prev, { text: "Server error. Please try again later!", sender: "bot" }]);
     }
-
+  
     setInput("");
   };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-
-      navigate("/"); // Redirect to landing page
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
-
-
-  if (!user) return null;
+  
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       <div className="bg-white shadow-md p-4 text-center text-xl font-bold">🌱 EcoChat Assistant</div>
-
-      <button onClick={handleSignOut} className="text-white text-xl font-bold hover:text-gray-400 transition-colors">
-        Logout
-      </button>
-      <div className="bg-green-50 p-2 text-sm text-center">
-        🖥 CPU: {usageMetrics.cpu.toFixed(1)}% | 🎮 GPU: {usageMetrics.gpu.toFixed(1)}%
-      </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => (
@@ -109,9 +60,7 @@ const ChatPage = () => {
             key={index}
             className={`p-3 max-w-lg rounded-lg ${msg.sender === "user" ? "bg-green-600 text-white self-end ml-auto" : "bg-white text-gray-800 self-start shadow-sm"}`}
           >
-            {msg.text.split('\n').map((line, i) => (
-              <p key={i} className="mb-1 last:mb-0">{line}</p>
-            ))}
+            {msg.text.split('\n').map((line, i) => <p key={i} className="mb-1 last:mb-0">{line}</p>)}
           </div>
         ))}
         <div ref={chatEndRef} />
