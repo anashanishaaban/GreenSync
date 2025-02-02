@@ -32,7 +32,7 @@ const ChatPage = () => {
     setMessages((prev) => [...prev, userMessage]);
   
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
