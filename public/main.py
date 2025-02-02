@@ -3,10 +3,8 @@ import ray
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
-# Initialize FastAPI
 app = FastAPI()
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,53 +12,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ray initialization
+# Constants for calculations
+DATA_CENTER_EMISSION_RATE = 0.0005  # kgCO2e per second per chat
+LOCAL_DEVICE_EMISSION_RATE = 0.0001 # kgCO2e per second per chat
+
 @ray.remote
-class EmissionCalculator:
-    def __init__(self):
-        # Initialize climate API connection here
-        pass
+class CreditCalculator:
+    def calculate_credits(self, duration: float, cpu_usage: float, gpu_usage: float):
+        # Calculate emissions savings
+        data_center_emissions = duration * DATA_CENTER_EMISSION_RATE
+        local_emissions = duration * LOCAL_DEVICE_EMISSION_RATE * (cpu_usage/100 + gpu_usage/100)
+        saved_emissions = data_center_emissions - local_emissions
+        
+        # Calculate green credits (1 credit = 1kg CO2e saved)
+        credits_earned = max(saved_emissions, 0)
+        
+        return {
+            "saved_co2e": round(saved_emissions, 4),
+            "credits_earned": round(credits_earned, 2),
+            "data_center_equivalent": round(data_center_emissions, 4)
+        }
 
-    def calculate_emissions(self, miles: float):
-        # Replace with actual API call to Cloverly/ClimateAPI
-        # Mocked calculation: 0.25kg per mile
-        return {"co2e_kg": miles * 0.25, "credits_needed": miles * 0.1}
-
-# Startup event
 @app.on_event("startup")
 async def startup_event():
-    ray.init(address="auto")  # Connect to existing Ray cluster
+    ray.init(address="auto")
 
-# Pydantic models
-class EmissionRequest(BaseModel):
-    miles: float
+class CreditRequest(BaseModel):
+    duration: float    # Chat duration in seconds
+    cpu_usage: float   # CPU usage percentage
+    gpu_usage: float   # GPU usage percentage
     user_id: str
 
-# API endpoints
-@app.post("/calculate-emissions")
-async def calculate_emissions(request: EmissionRequest, background_tasks: BackgroundTasks):
-    calculator = EmissionCalculator.remote()
-    result = ray.get(calculator.calculate_emissions.remote(request.miles))
+@app.post("/calculate-credits")
+async def calculate_credits(request: CreditRequest, background_tasks: BackgroundTasks):
+    calculator = CreditCalculator.remote()
+    result = ray.get(calculator.calculate_credits.remote(
+        request.duration,
+        request.cpu_usage,
+        request.gpu_usage
+    ))
     
-    # Store result in database (to be implemented)
     background_tasks.add_task(store_result_in_db, request.user_id, result)
     
     return {
-        "emissions_data": result,
-        "credits_required": result["credits_needed"],
-        "tree_equivalent": result["credits_needed"] / 10
+        "saved_emissions": result["saved_co2e"],
+        "green_credits": result["credits_earned"],
+        "data_center_comparison": result["data_center_equivalent"]
     }
-
-@app.post("/distribute_task/")
-async def distribute_task(carbon_emission: float):
-    return {"message": f"Received {carbon_emission} units of carbon emission"}
-
 
 def store_result_in_db(user_id: str, result: dict):
     # Implement database storage
     pass
 
-# Health check endpoint
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
