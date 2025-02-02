@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 const API_BASE = "http://localhost:8000";
 const CREDITS_API_URL = `${API_BASE}/calculate-credits`;
 const HARDWARE_METRICS_URL = `${API_BASE}/current-hardware-metrics`;
+const API_URL = "http://35.21.142.150:8000/chat"; // Replace with your backend URL
+
 
 // Initial greeting message from the bot.
 const INITIAL_MESSAGE = "Hello! I'm your eco-friendly AI assistant. Let's chat while saving the planet! 🌍";
@@ -53,6 +55,22 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
+useEffect(() => {
+  const interval = setInterval(async () => {
+    try {
+      const response = await fetch("http://localhost:8000/current-hardware-metrics");
+      if (response.ok) {
+        const data = await response.json();
+        setUsageMetrics({ cpu: data.cpu_usage });
+      }
+    } catch (error) {
+      console.error("Error fetching hardware metrics:", error);
+    }
+  }, 1000);
+  return () => clearInterval(interval);
+}, []);
+
+
   // Auto-scroll to the latest message.
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,7 +85,7 @@ useEffect(() => {
 
     try {
       // Call the chat endpoint (replace this with your Ollama implementation).
-      const response = await fetch(CHAT_API_URL, {
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),

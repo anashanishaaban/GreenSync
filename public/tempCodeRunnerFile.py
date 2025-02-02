@@ -4,13 +4,16 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import redis
 import json
-import psutil
-import time
-import uvicorn
+import os
 
 # --- Redis Setup ---
-redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
-
+# Adjust these parameters for your deployment.
+redis_client = redis.Redis(
+    host="localhost",
+    port=6379,
+    db=0,
+    decode_responses=True
+)
 # --- FastAPI Setup ---
 app = FastAPI()
 app.add_middleware(
@@ -39,22 +42,20 @@ class CreditCalculator:
 
 @app.on_event("startup")
 async def startup_event():
-    """Runs when FastAPI starts."""
-    ray.init()
-    # Start background CPU monitoring
-    background_task = BackgroundTasks()
-    background_task.add_task(monitor_cpu_usage)
+    ray.init() 
 
 class CreditRequest(BaseModel):
-    duration: float    
-    cpu_usage: float   
+    duration: float    # Chat duration in seconds
+    cpu_usage: float   # CPU usage percentage
     user_id: str
 
 @app.post("/calculate-credits")
 async def calculate_credits(request: CreditRequest, background_tasks: BackgroundTasks):
-    """Calculate green credits and store them."""
     calculator = CreditCalculator.remote()
-    result = ray.get(calculator.calculate_credits.remote(request.duration, request.cpu_usage))
+    result = ray.get(calculator.calculate_credits.remote(
+        request.duration,
+        request.cpu_usage
+    ))
     
     background_tasks.add_task(store_result_in_db, request.user_id, result)
     
@@ -65,10 +66,15 @@ async def calculate_credits(request: CreditRequest, background_tasks: Background
     }
 
 def store_result_in_db(user_id: str, result: dict):
-    """Update user credits in Redis."""
+    """
+    Update user credits in Redis.
+    """
     key = f"user_credits:{user_id}"
     current = redis_client.get(key)
-    current = float(current) if current else 0.0
+    if current is None:
+        current = 0.0
+    else:
+        current = float(current)
     new_total = current + result["credits_earned"]
     redis_client.set(key, new_total)
     print(f"Updated credits for user {user_id}: {new_total}")
@@ -77,21 +83,27 @@ def store_result_in_db(user_id: str, result: dict):
 def health_check():
     return {"status": "healthy"}
 
-# --- Hardware Monitoring ---
-def monitor_cpu_usage():
-    """Continuously monitors CPU and updates Redis every second."""
-    while True:
-        cpu_usage = psutil.cpu_percent(interval=1)
-        redis_client.set("latest_hardware_metrics", json.dumps({"cpu_usage": cpu_usage}))
-        print(f"Updated CPU usage: {cpu_usage}%")
-        time.sleep(1)
+# --- Endpoints for Hardware Metrics ---
+class HardwareMetrics(BaseModel):
+    cpu_usage: float
+
+@app.post("/update-hardware-metrics")
+async def update_hardware_metrics(metrics: HardwareMetrics):
+    # Save the latest hardware metrics as a JSON string in Redis.
+    redis_client.set("latest_hardware_metrics", json.dumps({"cpu_usage": metrics.cpu_usage}))
+    print("Updated hardware metrics:", {"cpu_usage": metrics.cpu_usage})
+    return {"status": "received"}
 
 @app.get("/current-hardware-metrics")
 async def current_hardware_metrics():
-    """Fetch the latest CPU usage data."""
     data = redis_client.get("latest_hardware_metrics")
-    return json.loads(data) if data else {"cpu_usage": 0}
+    if data:
+        return json.loads(data)
+    else:
+        return {"cpu_usage": 0}
 
 # --- Run the server ---
 if __name__ == "__main__":
+    import uvicorn
+    # For testing, run without --reload so that a single process is used.
     uvicorn.run("main:app", host="127.0.0.1", port=8000)
