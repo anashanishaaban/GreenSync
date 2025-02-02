@@ -1,70 +1,135 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const API_URL = "http://127.0.0.1:8000/calculate-credits";
+// Update for local testing
+const API_BASE = "http://localhost:8000";
+const CREDITS_API_URL = `${API_BASE}/calculate-credits`;
+const HARDWARE_METRICS_URL = `${API_BASE}/current-hardware-metrics`;
+
+// Initial greeting message from the bot.
 const INITIAL_MESSAGE = "Hello! I'm your eco-friendly AI assistant. Let's chat while saving the planet! 🌍";
 
 const ChatPage = () => {
   const [messages, setMessages] = useState([{ text: INITIAL_MESSAGE, sender: "bot" }]);
   const [input, setInput] = useState("");
-  const [chatStart, setChatStart] = useState(null);
-  const [usageMetrics, setUsageMetrics] = useState({ cpu: 0, gpu: 0 });
+  const [usageMetrics, setUsageMetrics] = useState({ cpu: 0 });
+  const [cumulativeMetrics, setCumulativeMetrics] = useState({
+    totalSavedEmissions: 0,
+    totalGreenCredits: 0,
+    totalDataCenterEquivalent: 0,
+  });
   const chatEndRef = useRef(null);
 
-  // Simulate hardware monitoring (replace with actual metrics collection)
+  // Poll the backend for real hardware metrics every second.
   useEffect(() => {
-    const interval = setInterval(() => {
-      setUsageMetrics({
-        cpu: Math.random() * 30 + 10,  // Simulated CPU usage 10-40%
-        gpu: Math.random() * 20 + 15   // Simulated GPU usage 15-35%
-      });
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(HARDWARE_METRICS_URL);
+        if (response.ok) {
+          const data = await response.json();
+          setUsageMetrics({ cpu: data.cpu_usage });
+        }
+      } catch (error) {
+        console.error("Error fetching hardware metrics:", error);
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // Update hardware metrics polling
+useEffect(() => {
+  const fetchMetrics = async () => {
+    try {
+      const response = await fetch(HARDWARE_METRICS_URL);
+      if (!response.ok) throw new Error('Failed to fetch');
+      const data = await response.json();
+      setUsageMetrics({ cpu: data.cpu_usage || 0 });
+    } catch (error) {
+      console.error("Error fetching hardware metrics:", error);
+      setUsageMetrics(prev => ({ ...prev, error: true }));
+    }
+  };
+
+  const interval = setInterval(fetchMetrics, 1000);
+  return () => clearInterval(interval);
+}, []);
+
+  // Auto-scroll to the latest message.
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async () => {
     if (input.trim() === "") return;
-  
+
+    const startTime = Date.now();
     const userMessage = { text: input, sender: "user" };
     setMessages((prev) => [...prev, userMessage]);
-  
+
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      // Call the chat endpoint (replace this with your Ollama implementation).
+      const response = await fetch(CHAT_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
-  
       const data = await response.json();
-      console.log("API Response:", data); // ✅ Debugging output
-  
+      let botText = "No content received";
       if (response.ok && data.response) {
-        const botMessage = data.response.content || "No content received"; // ✅ Extract content
-        setMessages((prev) => [...prev, { text: botMessage, sender: "bot" }]);
+        botText = data.response.content || "No content received";
       } else {
-        setMessages((prev) => [...prev, { text: "Error: No response from AI!", sender: "bot" }]);
+        botText = "Error: No response from AI!";
+      }
+      setMessages((prev) => [...prev, { text: botText, sender: "bot" }]);
+
+      const duration = (Date.now() - startTime) / 1000;
+      const metricsPayload = {
+        duration: duration,
+        cpu_usage: usageMetrics.cpu,
+        user_id: "test-user" // Replace with your authenticated user's ID.
+      };
+
+      const creditsResponse = await fetch(CREDITS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(metricsPayload)
+      });
+      const creditsData = await creditsResponse.json();
+      if (creditsResponse.ok) {
+        setCumulativeMetrics((prev) => ({
+          totalSavedEmissions: prev.totalSavedEmissions + creditsData.saved_emissions,
+          totalGreenCredits: prev.totalGreenCredits + creditsData.green_credits,
+          totalDataCenterEquivalent: prev.totalDataCenterEquivalent + creditsData.data_center_comparison,
+        }));
+      } else {
+        console.error("Error calculating credits:", creditsData);
       }
     } catch (error) {
-      console.error("Error fetching AI response:", error);
-      setMessages((prev) => [...prev, { text: "Server error. Please try again later!", sender: "bot" }]);
+      console.error("Error in chat processing:", error);
+      setMessages((prev) => [
+        ...prev,
+        { text: "Server error. Please try again later!", sender: "bot" }
+      ]);
     }
-  
-    setInput(""); // Clear input field
+    setInput("");
   };
-  
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
+      {/* Top Bar */}
       <div className="bg-white shadow-md p-4 text-center text-xl font-bold">
         🌱 EcoChat Assistant
       </div>
 
-      {/* System Metrics */}
+      {/* Hardware Usage Metrics */}
       <div className="bg-green-50 p-2 text-sm text-center">
-        🖥 CPU: {usageMetrics.cpu.toFixed(1)}% | 🎮 GPU: {usageMetrics.gpu.toFixed(1)}%
+        🖥 CPU: {usageMetrics.cpu.toFixed(1)}%
+      </div>
+
+      {/* Cumulative Chat Credits and Emissions */}
+      <div className="bg-green-100 p-2 text-sm text-center">
+        🌿 Saved emissions: {cumulativeMetrics.totalSavedEmissions.toFixed(2)} kg CO₂e |{" "}
+        💚 Green credits earned: {cumulativeMetrics.totalGreenCredits.toFixed(2)} |{" "}
+        🏭 Data center equivalent: {cumulativeMetrics.totalDataCenterEquivalent.toFixed(2)} kg
       </div>
 
       {/* Chat Messages */}
@@ -78,7 +143,7 @@ const ChatPage = () => {
                 : "bg-white text-gray-800 self-start shadow-sm"
             }`}
           >
-            {msg.text.split('\n').map((line, i) => (
+            {msg.text.split("\n").map((line, i) => (
               <p key={i} className="mb-1 last:mb-0">{line}</p>
             ))}
           </div>
