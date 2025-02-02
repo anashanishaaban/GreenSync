@@ -120,6 +120,12 @@ const ChatPage = () => {
   {/* Header with title centered */}
   <div className="bg-white shadow-md p-4 flex justify-center items-center">
     <div className="text-xl font-bold">🌱 EcoChat Assistant</div>
+    <button
+          onClick={() => navigate("/dashboard")}
+          className="absolute right-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+        >
+          Dashboard
+        </button>
   </div>
 
   {/* CPU Usage (centered) and Green Credits (right-aligned) */}
