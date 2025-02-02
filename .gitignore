@@ -24,3 +24,4 @@ yarn-error.log*
 public/__pycache__
 distributedcomputing/src/__pycache__
 venv
+.conda

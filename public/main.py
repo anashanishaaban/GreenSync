@@ -55,7 +55,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    ray.init()
+    ray.init(address="auto", logging_level="debug")
     monitor_thread = threading.Thread(target=monitor_cpu_usage, daemon=True)
     monitor_thread.start()
     print("CPU monitoring thread started.")

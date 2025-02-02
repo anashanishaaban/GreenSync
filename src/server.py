@@ -4,8 +4,9 @@ import ollama
 import ray
 from fastapi.middleware.cors import CORSMiddleware
 
-# 🔹 Initialize Ray (Ensure it starts on the main machine)
-ray.init(ignore_reinit_error=True)
+import ray
+
+ray.init(address="35.21.142.150:6379", logging_level="debug")
 
 # ✅ Define Ray remote function to distribute requests
 @ray.remote
