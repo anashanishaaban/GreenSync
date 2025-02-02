@@ -165,6 +165,21 @@ const fetchCredits = async () => {
                 <strong>Fluid Ounces:</strong> {formatNumber(waterSavedFlOz)} fl oz
               </p>
             </div>
+            {/* New Donate Credits Card */}
+            <div 
+              className="p-6 border rounded-lg bg-green-100 cursor-pointer hover:bg-green-200 transition"
+              onClick={() => navigate("/donations")}
+            >
+              <h4 className="text-lg font-bold text-green-800 mb-2">Donate Credits</h4>
+              <p className="text-gray-700">
+                Support environmental causes by donating your Green Credits.
+              </p>
+              <button 
+                className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+              >
+                Donate Now
+              </button>
+            </div>
           </div>
         </div>
       </main>
