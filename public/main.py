@@ -36,7 +36,6 @@ class CreditCalculator:
             "data_center_equivalent": round(data_center_emissions, 4)
         }
 
-
 # --- CPU Monitoring ---
 def monitor_cpu_usage():
     while True:
@@ -48,7 +47,7 @@ def monitor_cpu_usage():
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allow all origins for development
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -101,7 +100,6 @@ async def current_hardware_metrics():
 async def get_user_credits(user_id: str):
     credits = in_memory_db["user_credits"].get(user_id, 0.0)
     return {"green_credits": credits}
-
 
 @app.post("/chat")
 async def chat_endpoint(payload: dict):
