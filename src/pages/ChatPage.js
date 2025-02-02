@@ -12,22 +12,36 @@ const ChatPage = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() === "") return;
-
+  
     const userMessage = { text: input, sender: "user" };
-    setMessages([...messages, userMessage]);
-
-    // Simulated bot response (replace with actual AI API later)
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { text: "This is a placeholder response! 🌍", sender: "bot" },
-      ]);
-    }, 1000);
-
+    setMessages((prev) => [...prev, userMessage]);
+  
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+  
+      const data = await response.json();
+      console.log("API Response:", data); // ✅ Debugging output
+  
+      if (response.ok && data.response) {
+        const botMessage = data.response.content || "No content received"; // ✅ Extract content
+        setMessages((prev) => [...prev, { text: botMessage, sender: "bot" }]);
+      } else {
+        setMessages((prev) => [...prev, { text: "Error: No response from AI!", sender: "bot" }]);
+      }
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      setMessages((prev) => [...prev, { text: "Server error. Please try again later!", sender: "bot" }]);
+    }
+  
     setInput(""); // Clear input field
   };
+  
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">

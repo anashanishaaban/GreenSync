@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import ChatPage from "./pages/ChatPage";
 
-import logo from './logo.svg';
+//import logo from './logo.svg';
 import './App.css';
 
 const App = () => {
