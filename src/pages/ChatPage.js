@@ -43,17 +43,10 @@ const ChatPage = () => {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-<<<<<<< HEAD
-    // Start tracking chat duration
+
     const startTime = chatStart || Date.now();
     setChatStart(startTime);
 
-    // Add user message
-=======
-    const startTime = chatStart || Date.now();
-    setChatStart(startTime);
-
->>>>>>> anas
     const userMessage = { text: input, sender: "user" };
     setMessages(prev => [...prev, userMessage]);
 
