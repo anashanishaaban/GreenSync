@@ -9,6 +9,7 @@ import RegisterPage from "./pages/RegisterPage";
 import './App.css';
 import logo from './logo.svg';
 import Dashboard from "./pages/Dashboard";
+import Donation from "./pages/Donations";
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path = "/dashboard" element = {<Dashboard />} />
+        <Route path = "/donations" element = {<Donation />} />
       </Routes>
     </Router>
   );

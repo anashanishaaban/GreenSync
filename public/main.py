@@ -1,5 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import ray
 import psutil
@@ -107,6 +108,21 @@ async def chat_endpoint(payload: dict):
     user_id = payload.get("user_id", "guest-user")
     response_content = f"Received your message: {message}"
     return {"response": {"content": response_content}}
+
+@app.post("/donate-credits")
+async def donate_credits(payload: dict):
+    user_id = payload.get("user_id")
+    amount = payload.get("amount")
+    
+    current = in_memory_db["user_credits"].get(user_id, 0)
+    if current < amount:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Insufficient credits"}
+        )
+    
+    in_memory_db["user_credits"][user_id] = current - amount
+    return {"status": "success", "new_balance": current - amount}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
