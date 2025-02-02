@@ -24,3 +24,4 @@ if __name__ == "__main__":
     user_id = "test-user"
     result = send_chat_metrics(test_duration, test_cpu, test_gpu, user_id)
     print(f"API Response: {result}")
+    #test
