@@ -6,6 +6,11 @@ import ray
 import psutil
 import threading
 import uvicorn
+from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import uvicorn
 
 # --- In-Memory Data Store ---
 in_memory_db = {
@@ -109,20 +114,43 @@ async def chat_endpoint(payload: dict):
     response_content = f"Received your message: {message}"
     return {"response": {"content": response_content}}
 
+# Pydantic model for validation
+class DonationRequest(BaseModel):
+    user_id: str
+    amount: int
+
 @app.post("/donate-credits")
-async def donate_credits(payload: dict):
-    user_id = payload.get("user_id")
-    amount = payload.get("amount")
-    
-    current = in_memory_db["user_credits"].get(user_id, 0)
-    if current < amount:
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Insufficient credits"}
-        )
-    
-    in_memory_db["user_credits"][user_id] = current - amount
-    return {"status": "success", "new_balance": current - amount}
+async def donate_credits(payload: DonationRequest):
+    user_id = payload.user_id
+    amount = payload.amount
+
+    print(f"🔹 Received donation request: user_id={user_id}, amount={amount}")
+
+    if amount < 1:
+        print("❌ Error: Invalid donation amount")
+        raise HTTPException(status_code=400, detail="Invalid donation amount")
+
+    current_credits = in_memory_db["user_credits"].get(user_id, 0)
+
+    print(f"🔹 Current credits for {user_id}: {current_credits}")
+
+    # Ensure values are properly treated as integers
+    if isinstance(current_credits, float):
+        current_credits = int(current_credits)
+
+    if current_credits > amount:
+        print(f"❌ Error: Insufficient credits. Available: {current_credits}, Attempted: {amount}")
+        raise HTTPException(status_code=400, detail="Insufficient credits")
+
+    in_memory_db["user_credits"][user_id] = current_credits - amount
+    new_balance = in_memory_db["user_credits"][user_id]
+
+    print(f"✅ Success! {amount} credits deducted. New balance: {new_balance}")
+
+    return {"status": "success", "new_balance": new_balance}
+
+
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)

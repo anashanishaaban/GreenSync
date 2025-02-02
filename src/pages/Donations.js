@@ -45,12 +45,13 @@ const Donations = () => {
   // Handle donation submission
   const handleDonation = async (e) => {
     e.preventDefault();
-    const amount = parseInt(donationAmount);
-    if (!amount || amount < 1 || amount > creditData.current) {
+    const amount = parseInt(donationAmount, 10);
+  
+    if (isNaN(amount) || amount < 1 || amount > creditData.current) {
       setError("Invalid donation amount");
       return;
     }
-
+  
     setError(null);
     try {
       const response = await fetch("http://localhost:8000/donate-credits", {
@@ -58,18 +59,18 @@ const Donations = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: user?.uid || "guest-user",
-          amount: amount
-        })
+          amount: amount,
+        }),
       });
-
-      if (!response.ok) throw new Error(`Donation failed: ${response.statusText}`);
-      
-      // Update local credit data
-      setCreditData(prev => ({
+  
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Donation failed");
+  
+      setCreditData((prev) => ({
         current: prev.current - amount,
-        donated: prev.donated + amount
+        donated: prev.donated + amount,
       }));
-      
+  
       setDonationAmount("");
       alert("Donation successful! Thank you for your contribution! 🌍");
     } catch (err) {
@@ -77,6 +78,7 @@ const Donations = () => {
       console.error("Donation error:", err);
     }
   };
+  
 
   // Format numbers with commas
   const formatNumber = (num, decimals = 2) => 
