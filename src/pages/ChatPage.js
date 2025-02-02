@@ -1,56 +1,112 @@
 import React, { useState, useEffect, useRef } from "react";
 
+const API_URL = "http://127.0.0.1:8000/calculate-credits";
+const INITIAL_MESSAGE = "Hello! I'm your eco-friendly AI assistant. Let's chat while saving the planet! 🌍";
+
 const ChatPage = () => {
-  const [messages, setMessages] = useState([
-    { text: "Hello! How can I help you today?", sender: "bot" },
-  ]);
+  const [messages, setMessages] = useState([{ text: INITIAL_MESSAGE, sender: "bot" }]);
   const [input, setInput] = useState("");
+  const [chatStart, setChatStart] = useState(null);
+  const [usageMetrics, setUsageMetrics] = useState({ cpu: 0, gpu: 0 });
   const chatEndRef = useRef(null);
 
-  // Scroll to bottom when new message is added
+  // Simulate hardware monitoring (replace with actual metrics collection)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUsageMetrics({
+        cpu: Math.random() * 30 + 10,  // Simulated CPU usage 10-40%
+        gpu: Math.random() * 20 + 15   // Simulated GPU usage 15-35%
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
-    if (input.trim() === "") return;
+  const handleSend = async () => {
+    if (!input.trim()) return;
 
+    // Start tracking chat duration
+    const startTime = chatStart || Date.now();
+    setChatStart(startTime);
+
+    // Add user message
     const userMessage = { text: input, sender: "user" };
-    setMessages([...messages, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
 
-    // Simulated bot response (replace with actual AI API later)
-    setTimeout(() => {
-      setMessages((prev) => [
+    try {
+      // Calculate chat duration
+      const endTime = Date.now();
+      const duration = (endTime - startTime) / 1000; // in seconds
+
+      // Send metrics to backend
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          duration: duration,
+          cpu_usage: usageMetrics.cpu,
+          gpu_usage: usageMetrics.gpu,
+          user_id: "frontend-user"
+        }),
+      });
+
+      const data = await response.json();
+      
+      // Format response
+      const botResponse = 
+        `✅ Chat completed!\n` +
+        `🌿 Saved emissions: ${data.saved_emissions} kg CO2e\n` +
+        `💚 Green credits earned: ${data.green_credits}\n` +
+        `🏭 Data center equivalent: ${data.data_center_comparison} kg`;
+
+      setMessages(prev => [
         ...prev,
-        { text: "This is a placeholder response! 🌍", sender: "bot" },
+        { text: botResponse, sender: "bot" },
       ]);
-    }, 1000);
+      
+      // Reset chat timer
+      setChatStart(null);
+    } catch (error) {
+      setMessages(prev => [
+        ...prev,
+        { text: "⚠️ Error calculating credits. Please try again.", sender: "bot" },
+      ]);
+    }
 
-    setInput(""); // Clear input field
+    setInput("");
   };
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      {/* Header */}
-      <div className="bg-white shadow-md text-black p-4 text-center text-xl font-bold">
-        Sustainable Chat AI 💬
+      <div className="bg-white shadow-md p-4 text-center text-xl font-bold">
+        🌱 EcoChat Assistant
       </div>
 
-      {/* Chat Messages Area */}
+      {/* System Metrics */}
+      <div className="bg-green-50 p-2 text-sm text-center">
+        🖥 CPU: {usageMetrics.cpu.toFixed(1)}% | 🎮 GPU: {usageMetrics.gpu.toFixed(1)}%
+      </div>
+
+      {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => (
           <div
             key={index}
             className={`p-3 max-w-lg rounded-lg ${
               msg.sender === "user"
-                ? "bg-green-500 text-white self-end ml-auto"
-                : "bg-gray-300 text-black self-start"
+                ? "bg-green-600 text-white self-end ml-auto"
+                : "bg-white text-gray-800 self-start shadow-sm"
             }`}
           >
-            {msg.text}
+            {msg.text.split('\n').map((line, i) => (
+              <p key={i} className="mb-1 last:mb-0">{line}</p>
+            ))}
           </div>
         ))}
-        <div ref={chatEndRef} /> {/* Empty div to ensure smooth scrolling */}
+        <div ref={chatEndRef} />
       </div>
 
       {/* Input Field */}
@@ -58,7 +114,7 @@ const ChatPage = () => {
         <input
           type="text"
           className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="Type a message..."
+          placeholder="Type your message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
