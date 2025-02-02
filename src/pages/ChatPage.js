@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const API_URL = "http://127.0.0.1:8000/calculate-credits";
+const API_URL = "http://35.21.142.150:8000/chat"; // Replace with your local IP
 const INITIAL_MESSAGE = "Hello! I'm your eco-friendly AI assistant. Let's chat while saving the planet! 🌍";
 
 const ChatPage = () => {
