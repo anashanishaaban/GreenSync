@@ -15,6 +15,7 @@ in_memory_db = {
 # --- Constants for Calculations ---
 DATA_CENTER_EMISSION_RATE = 0.0005
 LOCAL_DEVICE_EMISSION_RATE = 0.0001
+CREDIT_MULTIPLIER = 20  # Adjust this multiplier to scale up credit earnings
 
 # --- Ray Actor for Credit Calculation ---
 @ray.remote
@@ -23,12 +24,18 @@ class CreditCalculator:
         data_center_emissions = duration * DATA_CENTER_EMISSION_RATE
         local_emissions = duration * LOCAL_DEVICE_EMISSION_RATE * (cpu_usage / 100)
         saved_emissions = data_center_emissions - local_emissions
-        credits_earned = max(saved_emissions, 0)
+        base_credits = max(saved_emissions, 0)
+
+        # Apply a dynamic multiplier based on CPU usage
+        dynamic_multiplier = CREDIT_MULTIPLIER + (cpu_usage / 2)  # Scales up with CPU usage
+        credits_earned = base_credits * dynamic_multiplier * 100  # Boost credits significantly
+
         return {
             "saved_co2e": round(saved_emissions, 4),
-            "credits_earned": round(credits_earned, 2),
+            "credits_earned": round(credits_earned),  # Rounded to whole number
             "data_center_equivalent": round(data_center_emissions, 4)
         }
+
 
 # --- CPU Monitoring ---
 def monitor_cpu_usage():
@@ -88,6 +95,13 @@ def health_check():
 @app.get("/current-hardware-metrics")
 async def current_hardware_metrics():
     return in_memory_db.get("latest_hardware_metrics", {"cpu_usage": 0})
+
+# New endpoint: return the accumulated green credits for a user.
+@app.get("/user-credits")
+async def get_user_credits(user_id: str):
+    credits = in_memory_db["user_credits"].get(user_id, 0.0)
+    return {"green_credits": credits}
+
 
 @app.post("/chat")
 async def chat_endpoint(payload: dict):
