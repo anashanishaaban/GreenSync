@@ -23,10 +23,6 @@ const ChatPage = () => {
         setUser(user);
       }
     });
-<<<<<<< HEAD
-
-=======
->>>>>>> anas
     return () => unsubscribe();
   }, [navigate]);
 
@@ -62,56 +58,19 @@ const ChatPage = () => {
     setMessages(prev => [...prev, userMessage]);
 
     try {
-<<<<<<< HEAD
-      // Calculate chat duration
-      const endTime = Date.now();
-      const duration = (endTime - startTime) / 1000; // in seconds
-
-      // Send metrics to backend
-=======
->>>>>>> anas
       const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-<<<<<<< HEAD
-          duration: duration,
-          cpu_usage: usageMetrics.cpu,
-          gpu_usage: usageMetrics.gpu,
-          user_id: "frontend-user"
-=======
           message: input,
           duration: (Date.now() - startTime) / 1000, // Calculate chat duration
           cpu_usage: usageMetrics.cpu,
           gpu_usage: usageMetrics.gpu,
           user_id: user?.uid || "guest-user",
->>>>>>> anas
         }),
       });
 
       const data = await response.json();
-<<<<<<< HEAD
-      
-      // Format response
-      const botResponse = 
-        `✅ Chat completed!\n` +
-        `🌿 Saved emissions: ${data.saved_emissions} kg CO2e\n` +
-        `💚 Green credits earned: ${data.green_credits}\n` +
-        `🏭 Data center equivalent: ${data.data_center_comparison} kg`;
-
-      setMessages(prev => [
-        ...prev,
-        { text: botResponse, sender: "bot" },
-      ]);
-      
-      // Reset chat timer
-      setChatStart(null);
-    } catch (error) {
-      setMessages(prev => [
-        ...prev,
-        { text: "⚠️ Error calculating credits. Please try again.", sender: "bot" },
-      ]);
-=======
       console.log("API Response:", data);
 
       const botMessage = data.response?.content ||
@@ -122,7 +81,6 @@ const ChatPage = () => {
     } catch (error) {
       console.error("Error fetching AI response:", error);
       setMessages(prev => [...prev, { text: "⚠️ Error calculating credits. Please try again.", sender: "bot" }]);
->>>>>>> anas
     }
 
     setInput("");
@@ -131,23 +89,15 @@ const ChatPage = () => {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-<<<<<<< HEAD
-      navigate("/"); // Redirect to landing page after logout
-=======
+
       navigate("/"); // Redirect to landing page
->>>>>>> anas
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
-<<<<<<< HEAD
 
-  if (!user) return null; //prevent UI from rendering until auth is checked
-
-=======
   if (!user) return null;
->>>>>>> anas
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
@@ -156,18 +106,6 @@ const ChatPage = () => {
       <button onClick={handleSignOut} className="text-white text-xl font-bold hover:text-gray-400 transition-colors">
         Logout
       </button>
-
-<<<<<<< HEAD
-      <button
-      onClick={handleSignOut}
-      className="text-white text-xl font-bold hover:text-gray-400 transition-colors"
-    >
-      Logout
-    </button>
-
-      {/* System Metrics */}
-=======
->>>>>>> anas
       <div className="bg-green-50 p-2 text-sm text-center">
         🖥 CPU: {usageMetrics.cpu.toFixed(1)}% | 🎮 GPU: {usageMetrics.gpu.toFixed(1)}%
       </div>
@@ -202,10 +140,4 @@ const ChatPage = () => {
     </div>
   );
 };
-
-<<<<<<< HEAD
-
 export default ChatPage;
-=======
-export default ChatPage;
->>>>>>> anas
