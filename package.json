@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "cra-template": "1.2.0",
+    "firebase": "^11.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.5",
@@ -37,6 +38,7 @@
     "@tailwindcss/postcss": "^4.0.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
+    "postcss-loader": "^8.1.1",
     "tailwindcss": "^4.0.3",
     "web-vitals": "^4.2.4"
   }

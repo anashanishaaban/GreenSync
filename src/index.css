@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,9 +9,41 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: black;
+  color: white;
+  overflow: hidden;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.blurry-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blurry-shape {
+  position: absolute;
+  width: 40rem;
+  height: 40rem;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 10%, rgba(255,255,255,0) 60%);
+  filter: blur(80px);
+  opacity: 0.7;
+  animation: moveBlobs 8s infinite alternate ease-in-out;
+}
+
+@keyframes moveBlobs {
+  0% {
+    transform: translate(-30%, -30%) scale(1.1) rotate(0deg);
+  }
+  50% {
+    transform: translate(30%, 20%) scale(1.3) rotate(20deg);
+  }
+  100% {
+    transform: translate(-20%, 30%) scale(1.2) rotate(-15deg);
+  }
 }

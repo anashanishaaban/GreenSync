@@ -32,7 +32,7 @@ const ChatPage = () => {
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Header */}
-      <div className="bg-white shadow-md p-4 text-center text-xl font-bold">
+      <div className="bg-white shadow-md text-black p-4 text-center text-xl font-bold">
         Sustainable Chat AI 💬
       </div>
 
