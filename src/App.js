@@ -8,6 +8,7 @@ import RegisterPage from "./pages/RegisterPage";
 
 import './App.css';
 import logo from './logo.svg';
+import Dashboard from "./pages/Dashboard";
 
 const App = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path = "/dashboard" element = {<Dashboard />} />
       </Routes>
     </Router>
   );

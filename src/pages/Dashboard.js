@@ -1,111 +1,173 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase"; // Firebase for user authentication
+import { auth } from "../firebase";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || window.location.origin;
-const USER_CREDITS_API_URL = `${API_BASE_URL}/user-credits`;
-const USER_STATS_API_URL = `${API_BASE_URL}/user-statistics`; // New API to fetch emissions & water savings
+// Conversion factors (adjust these relative factors as needed)
+const DATA_CENTER_EMISSION_FACTOR = 0.012 / 20; // kg CO₂ per credit
+const LOCAL_COMPUTE_EMISSION_FACTOR = 0.002 / 20; // kg CO₂ per credit
+const WATER_SAVING_LITERS_PER_CREDIT = 0.1 / 20; // liters saved per credit
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [stats, setStats] = useState({
-    greenCredits: 0,
-    savedEmissions: 0,
-    consumedEmissions: 0,
-    waterSavedLiters: 0,
-    waterSavedFlOz: 0
-  });
+  const [greenCredits, setGreenCredits] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch authenticated user info
+  // Handle user authentication state
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUser(user);
-        fetchUserStats(user.uid);
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
       } else {
-        navigate("/login"); // Redirect if not logged in
+        navigate("/login");
       }
     });
-
-    return () => unsubscribe();
+    return unsubscribe;
   }, [navigate]);
 
-  // Fetch user statistics (Green Credits, Emissions, Water Saved)
-  const fetchUserStats = async (userId) => {
+// In fetchCredits function:
+const fetchCredits = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(`${USER_STATS_API_URL}?user_id=${userId}`);
-      if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
+      // Match the ChatPage's API URL structure exactly
+      const response = await fetch(
+        `http://localhost:8000/user-credits?user_id=${user?.uid || "guest-user"}`
+      );
+      
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      
       const data = await response.json();
-      setStats({
-        greenCredits: data.green_credits,
-        savedEmissions: data.saved_emissions,
-        consumedEmissions: data.consumed_emissions,
-        waterSavedLiters: data.water_saved_liters,
-        waterSavedFlOz: data.water_saved_fl_oz
-      });
-    } catch (error) {
-      console.error("Error fetching user statistics:", error);
+      // Ensure we're using the same response structure as ChatPage
+      setGreenCredits(data.green_credits || 0);
+    } catch (err) {
+      setError("Failed to load credits. Please try again.");
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
+  
+  // In useEffect for initial load
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        // Fetch credits immediately after auth resolves
+        await fetchCredits();
+      } else {
+        navigate("/login");
+      }
+    });
+    return unsubscribe;
+  }, [navigate]);
+
+  // Calculate environmental impact
+  const dataCenterEmissions = greenCredits * DATA_CENTER_EMISSION_FACTOR;
+  const localEmissions = greenCredits * LOCAL_COMPUTE_EMISSION_FACTOR;
+  const savedEmissions = dataCenterEmissions - localEmissions;
+  const waterSavedLiters = greenCredits * WATER_SAVING_LITERS_PER_CREDIT;
+  const waterSavedFlOz = waterSavedLiters * 33.814;
+
+  // Format numbers with commas
+  const formatNumber = (num, decimals = 2) => 
+    new Intl.NumberFormat(undefined, { 
+      minimumFractionDigits: decimals, 
+      maximumFractionDigits: decimals 
+    }).format(num);
+
+  // Loading spinner component
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
-      {/* Header Section */}
-      <div className="bg-white shadow-md p-4 flex justify-between items-center px-6">
-        {/* GreenSync Button (Top Left) */}
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow-md p-4 flex justify-between items-center">
         <button
           onClick={() => navigate("/")}
-          className="text-green-600 font-semibold hover:text-green-800 transition text-lg"
+          className="text-green-600 font-bold text-xl hover:text-green-800 transition-colors"
         >
           GreenSync
         </button>
-
-        <div className="text-xl font-bold">Dashboard</div>
-
-        {/* Chat Now Button (Top Right) */}
-        <button
-          onClick={() => navigate("/chat")}
-          className="text-green-600 font-semibold hover:text-green-800 transition text-lg"
-        >
-          Chat Now
-        </button>
-      </div>
-
-      {/* User Info Section */}
-      <div className="p-6 text-center">
-        <h2 className="text-2xl font-semibold">Welcome, {user?.email}</h2>
-        <p className="text-gray-500">Your environmental impact overview</p>
-      </div>
-
-      {/* Statistics Section */}
-      <div className="flex flex-col items-center justify-center space-y-4">
-        {/* Green Credits */}
-        <div className="bg-white shadow-md p-6 rounded-lg w-3/4 text-center">
-          <h3 className="text-lg font-bold text-green-600">🌿 Green Credits</h3>
-          <p className="text-2xl font-semibold">{stats.greenCredits}</p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => navigate("/chat")}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+          >
+            Chat Now
+          </button>
+          <button
+            onClick={() => auth.signOut()}
+            className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+          >
+            Logout
+          </button>
         </div>
+      </header>
 
-        {/* Saved Emissions */}
-        <div className="bg-white shadow-md p-6 rounded-lg w-3/4 text-center">
-          <h3 className="text-lg font-bold text-blue-600">🌎 CO₂ Saved</h3>
-          <p className="text-2xl font-semibold">{stats.savedEmissions} kg</p>
-        </div>
+      <main className="p-8">
+        <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
 
-        {/* Consumed Emissions */}
-        <div className="bg-white shadow-md p-6 rounded-lg w-3/4 text-center">
-          <h3 className="text-lg font-bold text-red-600">🔥 CO₂ Consumed</h3>
-          <p className="text-2xl font-semibold">{stats.consumedEmissions} kg</p>
-        </div>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+            <button 
+              onClick={fetchCredits}
+              className="ml-4 text-red-700 underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
-        {/* Water Saved */}
-        <div className="bg-white shadow-md p-6 rounded-lg w-3/4 text-center">
-          <h3 className="text-lg font-bold text-blue-500">💧 Water Saved</h3>
-          <p className="text-2xl font-semibold">
-            {stats.waterSavedLiters} L ({stats.waterSavedFlOz} fl oz)
-          </p>
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold">Account Overview</h3>
+            <p className="text-gray-600">Email: {user.email}</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 border rounded-lg">
+              <h4 className="text-lg font-bold mb-2">Green Credits</h4>
+              <p className="text-2xl">
+                {formatNumber(greenCredits, 0)} 🌿
+              </p>
+            </div>
+
+            <div className="p-4 border rounded-lg">
+              <h4 className="text-lg font-bold mb-2">Emissions (kg CO₂)</h4>
+              <p>
+                <strong>Data Center:</strong>{" "}
+                {formatNumber(dataCenterEmissions, 3)}
+              </p>
+              <p>
+                <strong>Local Compute:</strong>{" "}
+                {formatNumber(localEmissions, 3)}
+              </p>
+              <p className="text-green-600">
+                <strong>Total Saved:</strong>{" "}
+                {formatNumber(savedEmissions, 3)}
+              </p>
+            </div>
+
+            <div className="p-4 border rounded-lg">
+              <h4 className="text-lg font-bold mb-2">Water Savings</h4>
+              <p>
+                <strong>Liters:</strong> {formatNumber(waterSavedLiters)} L
+              </p>
+              <p>
+                <strong>Fluid Ounces:</strong> {formatNumber(waterSavedFlOz)} fl oz
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
