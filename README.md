@@ -1,70 +1,122 @@
-# Getting Started with Create React App
+# 🌿 **greensync: decentralized ai for a greener future** 🌎  
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> **bringing ai computation to your devices while saving the planet!**  
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🌟 **inspiration**  
 
-### `npm start`
+ai is amazing, but its environmental impact? **not so much.** 😟💨  
+millions use ai daily, relying on energy-hungry **data centers** that consume vast amounts of electricity.  
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+we asked ourselves:  
+✦ *what if ai models could run on a **decentralized network** instead?*  
+✦ *what if users were **rewarded** for contributing computing power?*  
+✦ *what if ai usage could be **eco-friendly** and still powerful?*  
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+thus, **greensync** was born—an ai system that distributes computation across multiple devices, reducing reliance on the cloud while giving users **green coins** for their contributions. 💰♻️  
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 💡 **what it does**  
 
-### `npm run build`
+✦ **decentralized ai compute** – instead of using centralized servers, greensync **splits ai workloads** across users’ devices.  
+✦ **green coins** – earn rewards based on your device’s contribution to ai processing. 🏅  
+✦ **real-time impact tracking** – see your **carbon savings** and track your contribution to a sustainable ai ecosystem. 🌍  
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+> *your laptop or desktop can now be part of a global ai network—**without** relying on cloud servers!* 🚀  
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🛠 **how we built it**  
 
-### `npm run eject`
+✦ **backend:** fastapi 🏗️ handles user authentication, api endpoints, and credit calculations.  
+✦ **distributed computing:** ray ⚡ efficiently distributes ai tasks across connected devices.  
+✦ **frontend:** react + tailwindcss 🎨 provides a sleek, real-time user experience.  
+✦ **llm processing:** ollama 🧠 runs ai models locally without needing cloud gpus.  
+✦ **data sync:** firebase 🔥 keeps track of green coins, user data, and system metrics.  
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+> *instead of traditional ai cloud models, we use a dynamic resource-sharing system that **distributes ai tasks** among connected devices. no expensive cloud needed!* 💻🌱  
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## ⚡ **challenges we faced**  
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+✦ running computation **in the browser** was difficult due to security and performance constraints.  
+✦ **balancing ai workloads** across devices while preventing overload was tricky.  
+✦ keeping green coin balances **accurate & real-time** across the dashboard and donation pages.  
+✦ optimizing **ray’s scheduling algorithms** to maximize efficiency across **different hardware configurations**.  
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🎉 **accomplishments we're proud of**  
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+✦ **ai runs without the cloud** – successfully distributed ai processing **without** relying on cloud infrastructure. 🌍  
+✦ **green coin system** – a **real-time reward system** that fairly distributes credits based on contribution. 💰  
+✦ **engaging ui** – built an **interactive, user-friendly dashboard** that tracks earnings & impact. 📊  
+✦ **optimized task scheduling** – made ray **super efficient** in splitting workloads across devices. ⚡  
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🤯 **what we learned**  
 
-### Analyzing the Bundle Size
+✦ **decentralized ai is challenging** but possible! browser-based computing has limitations.  
+✦ **optimizing computation sharing** is crucial for **performance & fairness**.  
+✦ **task scheduling with ray is key** for balancing workloads efficiently.  
+✦ **real-time ui updates require careful state management** to keep everything in sync.  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## 🚀 **what’s next for greensync?**  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+✦ **support for more ai models** – expand compatibility with **bigger and better** ai models.  
+✦ **smarter task allocation** – improve **real-time resource distribution** for efficiency.  
+✦ **ai compute pools** – allow users to **team up** for even larger ai projects!  
+✦ **real-world impact** – convert **green coins** into **carbon offset donations** for sustainability projects. 🌱💚  
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🛠 **tech stack**  
 
-### Deployment
+✦ **backend:** fastapi 🚀  
+✦ **compute distribution:** ray ⚡  
+✦ **llm processing:** ollama 🤖  
+✦ **frontend:** react + tailwindcss 🎨  
+✦ **data sync & auth:** firebase 🔥  
+✦ **programming languages:** python 🐍, javascript ⚡  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+---
 
-### `npm run build` fails to minify
+## 🌍 **try it out!**  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+💻 **run the greensync server:**  
+```sh
+export ray_enable_windows_or_osx_cluster=1
+ray start --head --port=6379
+uvicorn server:app --host 0.0.0.0 --port=8000
+```
+
+🖥️ **connect another device as a worker:**  
+```sh
+export ray_enable_windows_or_osx_cluster=1
+ray start --address=<your_ip>:6379
+```
+
+🌐 **run the frontend:**  
+```sh
+npm install
+npm start
+```
+
+---
+
+## 🌟 **join the future of decentralized ai!**  
+
+> 🛠️ **contribute to the project!** [fork the repo](#) and help make ai more sustainable!  
+> 💚 **support the cause!** spread the word and **help reduce ai’s carbon footprint!** 🌍  
+
+let’s make ai **greener, fairer, and more accessible** together! 🌱🚀  
+
+---
+
+🎨 **designed with love for the planet.** 🌎💚 **greensync - ai that cares.**
